@@ -1,0 +1,6 @@
+# large outputs: snapshots (recomputed by `python run.py study`)
+results/**/snapshots_*.npy
+logs/
+__pycache__/
+*.pyc
+docs/_build/

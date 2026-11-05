@@ -1,0 +1,10 @@
+name: knwins
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - fenics=2019.1.0
+  - numpy=1.26
+  - scipy=1.13
+  - matplotlib=3.9
+  - setuptools<81  # ufl 2019 imports pkg_resources

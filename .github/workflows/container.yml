@@ -1,0 +1,39 @@
+name: container
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths: [apptainer.def, environment.yml, .github/workflows/container.yml]
+  pull_request:
+    paths: [apptainer.def, environment.yml, .github/workflows/container.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  apptainer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # official Apptainer PPA (apt retries failed downloads)
+      - name: Install Apptainer
+        run: |
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y apptainer
+      - run: apptainer build knwins.sif apptainer.def
+      - run: apptainer test knwins.sif
+      # oras://ghcr.io/fraromor/knwins-numerical-experiments:<tag>, pulled with `apptainer pull`
+      - if: github.event_name != 'pull_request'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          image="oras://ghcr.io/${GITHUB_REPOSITORY,,}"
+          tag=latest
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then tag="$GITHUB_REF_NAME"; fi
+          echo "$TOKEN" | apptainer registry login --username "$GITHUB_ACTOR" \
+            --password-stdin oras://ghcr.io
+          apptainer push knwins.sif "$image:$tag"

@@ -1,0 +1,35 @@
+# Apptainer container with the conda environment of environment.yml (FEniCS
+# 2019.1.0, numpy, scipy, matplotlib). The code and the results stay in the
+# repository, which apptainer binds as the working directory:
+#
+#   apptainer build knwins.sif apptainer.def
+#   apptainer exec knwins.sif python run.py study cube/nu_1
+#   apptainer exec knwins.sif python template.py study
+
+Bootstrap: docker
+From: mambaorg/micromamba:1.5.10
+
+%labels
+    Description Kolmogorov n-widths of Navier-Stokes solution sets
+    License Apache-2.0
+
+%files
+    environment.yml /opt/knwins/environment.yml
+
+%post
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    micromamba install --yes --name base --file /opt/knwins/environment.yml
+    micromamba clean --all --yes
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH=/opt/conda/bin:$PATH
+    export MPLBACKEND=Agg
+    export OMP_NUM_THREADS=1
+
+%runscript
+    exec python "$@"
+
+%test
+    export PATH=/opt/conda/bin:$PATH
+    python -c "import dolfin, numpy, scipy, matplotlib; print('dolfin', dolfin.__version__)"
